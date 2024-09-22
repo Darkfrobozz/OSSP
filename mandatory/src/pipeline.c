@@ -7,21 +7,21 @@
 #define WRITE 1
 
 void child_a(int fd[]) {
-  dup2(fd[1], 1);
+  dup2(fd[WRITE], STDOUT_FILENO);
   // We can close the pipe reader
-  close(fd[0]);
+  close(fd[READ]);
 
   // This should be done last leaves pipeline.c
-  execlp("ls", "-F -1");
+  execlp("ls", "ls", "-F", "-1", NULL);
 }
 
 void child_b(int fd[]) {
-  dup2(fd[0], 0);
+  dup2(fd[READ], STDIN_FILENO);
   // We can close the pipe reader
-  close(fd[1]);
+  close(fd[WRITE]);
 
   // Same as in child a
-  execlp("nl", "");
+  execlp("nl", "nl", NULL);
 }
 
 int main(void) {
@@ -50,7 +50,7 @@ int main(void) {
 
   // Reuse fd for status
   wait(fd);
-  printf("%d\n", *fd);
+  // printf("%d\n", *fd);
   wait(fd + 1);
-  printf("%d\n", *(fd + 1));
+  // printf("%d\n", *(fd + 1));
 }
