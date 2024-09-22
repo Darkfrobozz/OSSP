@@ -1,26 +1,56 @@
 #include <stdio.h>    // puts(), printf(), perror(), getchar()
 #include <stdlib.h>   // exit(), EXIT_SUCCESS, EXIT_FAILURE
-#include <unistd.h>   // getpid(), getppid(),fork()
 #include <sys/wait.h> // wait()
+#include <unistd.h>   // getpid(), getppid(),fork()
 
-#define READ  0
+#define READ 0
 #define WRITE 1
 
 void child_a(int fd[]) {
+  dup2(fd[1], 1);
+  // We can close the pipe reader
+  close(fd[0]);
 
-  // TODO: Add code here.
-
+  // This should be done last leaves pipeline.c
+  execlp("ls", "-F -1");
 }
 
 void child_b(int fd[]) {
+  dup2(fd[0], 0);
+  // We can close the pipe reader
+  close(fd[1]);
 
-  // TODO: Add code here.
-
+  // Same as in child a
+  execlp("nl", "");
 }
 
 int main(void) {
   int fd[2];
+  if (pipe(fd) == -1) {
+    perror("Could not create pipe");
+  }
 
-  // TODO: Add code here.
+  switch (fork()) {
+  case 0:
+    child_a(fd);
+  case -1:
+    perror("Could not fork");
+  }
 
+  switch (fork()) {
+  case 0:
+    child_b(fd);
+  case -1:
+    perror("Done");
+  }
+
+  // Parent does not need pipes, so close them
+  close(fd[0]);
+  close(fd[1]);
+
+  // Reuse fd for status
+  wait(fd);
+  printf("%d\n", *fd);
+  wait(fd + 1);
+  printf("%d\n", *(fd + 1));
 }
