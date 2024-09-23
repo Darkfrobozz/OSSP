@@ -115,6 +115,7 @@ int main() {
     get_line(line, size);
 
     n = parse_commands(line, commands);
+    print_commands(n);
 
     fork_commands(n);
 
