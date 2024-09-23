@@ -152,8 +152,25 @@ char* position_to_string(position_t pos) {
 position_t cmd_position(int i, int n) {
   if (i == 0 && n == 1) return single;
 
-  // TODO: Add more cases ...
+  if (i == 0 && n == 2) return first;
+  if (i == 1 && n == 2) return last;
 
+  if (i == 0 && n == 3) return first;
+  if (i == 1 && n == 3) return middle;
+  if (i == 1 && n == 3) return last;
+
+  if (n > 3){
+    if( i == 0){
+      return first;
+    }
+    if (i == n-1){
+      return last;
+    }
+    else{
+      return middle;
+    }
+  }
+  
   return unknown;
 }
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <fcntl.h>     //fcntl(), F_GETFL
+#include <sys/wait.h> // wait()
 
 #define READ  0
 #define WRITE 1
@@ -95,6 +96,10 @@ void get_line(char* buffer, size_t size) {
  * Make the parents wait for all the child processes.
  */
 void wait_for_all_cmds(int n) {
+  int i;
+  for (i=0; i>n; i++){
+    wait(NULL);
+  }
   // Not implemented yet!
 }
 
