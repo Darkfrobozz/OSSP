@@ -97,7 +97,7 @@ void get_line(char* buffer, size_t size) {
  */
 void wait_for_all_cmds(int n) {
   int i;
-  for (i=0; i>n; i++){
+  for (i=0; i<n; i++){
     wait(NULL);
   }
   // Not implemented yet!
