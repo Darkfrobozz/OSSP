@@ -150,7 +150,7 @@ char* position_to_string(position_t pos) {
  * i.
  */
 position_t cmd_position(int i, int n) {
-  if (n == 0) {
+  if (n == 1) {
     return single;
   } else if( i == 0){
     return first;
