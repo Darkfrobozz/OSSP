@@ -50,14 +50,42 @@ void fork_error() {
  *  Fork a proccess for command with index i in the command pipeline. If needed,
  *  create a new pipe and update the in and out members for the command..
  */
-void fork_cmd(int i) {
+void fork_cmd(int i, int left[2], int right[2]) {
   pid_t pid;
 
   switch (pid = fork()) {
     case -1:
       fork_error();
     case 0:
+      // Close unnecessary pipes
+      close(left[WRITE]);
+      close(right[READ]);
       // Child process after a successful fork().
+      printf("%d", getpid());
+      printf("%d", commands[i].pos);
+      switch (commands[i].pos)
+      {
+        case single:
+          close(left[READ]);
+          close(right[WRITE]);
+          /* code */
+          break;
+        case first:
+          close(left[READ]);
+          dup2(right[WRITE], STDOUT_FILENO);
+          break;
+        case middle:
+          dup2(left[READ], STDIN_FILENO);
+          dup2(right[WRITE], STDOUT_FILENO);
+          break;
+        case last:
+          close(right[WRITE]);
+          dup2(left[READ], STDIN_FILENO);
+          break;
+        
+        default:
+          break;
+      }
 
       // Execute the command in the contex of the child process.
       execvp(commands[i].argv[0], commands[i].argv);
@@ -77,9 +105,28 @@ void fork_cmd(int i) {
  *  Fork one child process for each command in the command pipeline.
  */
 void fork_commands(int n) {
-
+  // The pipe created in previous loop
+  int fd_l[] = {-1, -1};
+  // The pipe created in current loop
+  int fd_n[] = {-1, -1};
   for (int i = 0; i < n; i++) {
-    fork_cmd(i);
+    if (i != n - 1) {
+      if(pipe(fd_n) == -1) {
+        perror("Failed to create pipe");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    // make pipe and send it based on 
+    printf("%d", i);
+    fork_cmd(i, fd_l, fd_n);
+
+    //Close pipe that is leaving
+    close(fd_l[0]);
+    close(fd_l[1]);
+    // move next pipe to last
+    fd_l[0] = fd_n[0];
+    fd_l[1] = fd_n[1];
   }
 }
 
