@@ -128,8 +128,12 @@ void fork_commands(int n) {
     fork_cmd(i, fd_l, fd_r);
 
     //Close pipe that is leaving
-    close(fd_l[0]);
-    close(fd_l[1]);
+    if (fd_l[0] != -1) {
+      if (close(fd_l[0]) || close(fd_l[1])) {
+        perror("Died in parent because of closing pipes");
+        exit(EXIT_FAILURE);
+      }
+    }
     // move next pipe to last
     fd_l[0] = fd_r[0];
     fd_l[1] = fd_r[1];
