@@ -58,20 +58,13 @@ void fork_cmd(int i, int left[2], int right[2]) {
       fork_error();
     case 0:
       // Close unnecessary pipes
-      close(left[WRITE]);
-      close(right[READ]);
       // Child process after a successful fork().
-      printf("%d", getpid());
-      printf("%d", commands[i].pos);
       switch (commands[i].pos)
       {
         case single:
-          close(left[READ]);
-          close(right[WRITE]);
           /* code */
           break;
         case first:
-          close(left[READ]);
           dup2(right[WRITE], STDOUT_FILENO);
           break;
         case middle:
@@ -79,12 +72,23 @@ void fork_cmd(int i, int left[2], int right[2]) {
           dup2(right[WRITE], STDOUT_FILENO);
           break;
         case last:
-          close(right[WRITE]);
           dup2(left[READ], STDIN_FILENO);
           break;
         
         default:
           break;
+      }
+      if (right[READ] != -1) {
+        if (close(right[WRITE]) || close(right[READ])) {
+          perror("Could not close unused right pipe");
+          exit(EXIT_FAILURE);
+        }
+      }
+      if (left[READ] != -1) {
+        if (close(left[READ]) || close(left[WRITE])) {
+          perror("Could not close unused left pipe\n");
+          exit(EXIT_FAILURE);
+        }
       }
 
       // Execute the command in the contex of the child process.
@@ -106,27 +110,29 @@ void fork_cmd(int i, int left[2], int right[2]) {
  */
 void fork_commands(int n) {
   // The pipe created in previous loop
-  int fd_l[] = {-1, -1};
+  int fd_l[2] = {-1, -1};
   // The pipe created in current loop
-  int fd_n[] = {-1, -1};
+  int fd_r[2] = {-1, -1};
   for (int i = 0; i < n; i++) {
     if (i != n - 1) {
-      if(pipe(fd_n) == -1) {
+      if(pipe(fd_r) == -1) {
         perror("Failed to create pipe");
         exit(EXIT_FAILURE);
       }
+    } else {
+      fd_r[0] = -1;
+      fd_r[1] = -1;
     }
 
     // make pipe and send it based on 
-    printf("%d", i);
-    fork_cmd(i, fd_l, fd_n);
+    fork_cmd(i, fd_l, fd_r);
 
     //Close pipe that is leaving
     close(fd_l[0]);
     close(fd_l[1]);
     // move next pipe to last
-    fd_l[0] = fd_n[0];
-    fd_l[1] = fd_n[1];
+    fd_l[0] = fd_r[0];
+    fd_l[1] = fd_r[1];
   }
 }
 
@@ -162,7 +168,6 @@ int main() {
     get_line(line, size);
 
     n = parse_commands(line, commands);
-    print_commands(n);
 
     fork_commands(n);
 
